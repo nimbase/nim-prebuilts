@@ -88,10 +88,10 @@ jobs:
             file-suffix: macosx_x64
             ext: tar.xz
           - runner: windows-latest
-            file-suffix: _x64
+            file-suffix: windows_x64
             ext: zip
           - runner: windows-11-arm
-            file-suffix: _arm64
+            file-suffix: windows_arm64
             ext: zip
     steps:
       - name: Clone Nim
@@ -138,20 +138,23 @@ jobs:
         run: |
           set -eu
           ver="${{ needs.resolve.outputs.nim-version }}"
-          archive="nim-${ver}-${{ matrix.file-suffix }}.tar.xz"
+          artifact="nim-${ver}-${{ matrix.file-suffix }}"
+          archive="${artifact}.tar.xz"
           rm -rf "Nim-src/.git"
           mv Nim-src "nim-${ver}"
           tar cJf "${archive}" "nim-${ver}"
           ls -lh "${archive}"
           tar tf "${archive}" | head -5 || true
           echo "ARCHIVE=${archive}" >> "$GITHUB_ENV"
+          echo "ARTIFACT=${artifact}" >> "$GITHUB_ENV"
 
       - name: Package (windows zip)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $ver = "${{ needs.resolve.outputs.nim-version }}"
-          $archive = "nim-$ver${{ matrix.file-suffix }}.zip"
+          $artifact = "nim-$ver-${{ matrix.file-suffix }}"
+          $archive = "$artifact.zip"
           if (Test-Path "Nim-src/.git") { Remove-Item -Recurse -Force "Nim-src/.git" }
           if (Test-Path "nim-$ver") { Remove-Item -Recurse -Force "nim-$ver" }
           Rename-Item -Path "Nim-src" -NewName "nim-$ver"
@@ -159,10 +162,11 @@ jobs:
           Compress-Archive -Force -Path "nim-$ver" -DestinationPath $archive
           Get-Item $archive | Format-List Name, Length
           "ARCHIVE=$archive" >> $env:GITHUB_ENV
+          "ARTIFACT=$artifact" >> $env:GITHUB_ENV
 
       - uses: actions/upload-artifact@v4
         with:
-          name: nim-${{ needs.resolve.outputs.nim-version }}-${{ matrix.file-suffix }}.${{ matrix.ext }}
+          name: ${{ env.ARTIFACT }}
           path: ${{ env.ARCHIVE }}
           if-no-files-found: error
 

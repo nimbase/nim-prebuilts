@@ -4,7 +4,7 @@ Community Nim toolchain prebuilts for Linux, macOS and Windows on x64 and arm64,
 
 ## Assets
 
-Each `vX.Y.Z` release mirrors `nim-lang.org` naming, plus Windows arm64:
+Each `vX.Y.Z` release follows `nim-lang.org` naming for unix, plus `windows_` prefix on Windows for consistency (upstream ships `nim-X.Y.Z_x64.zip` with no OS part):
 
 | Runner | Asset |
 | --- | --- |
@@ -12,8 +12,8 @@ Each `vX.Y.Z` release mirrors `nim-lang.org` naming, plus Windows arm64:
 | `ubuntu-24.04-arm` | `nim-X.Y.Z-linux_arm64.tar.xz` |
 | `macos-15-intel` | `nim-X.Y.Z-macosx_x64.tar.xz` |
 | `macos-14` | `nim-X.Y.Z-macosx_arm64.tar.xz` |
-| `windows-latest` | `nim-X.Y.Z_x64.zip` |
-| `windows-11-arm` | `nim-X.Y.Z_arm64.zip` |
+| `windows-latest` | `nim-X.Y.Z-windows_x64.zip` |
+| `windows-11-arm` | `nim-X.Y.Z-windows_arm64.zip` |
 
 Unix archives contain a top-level `nim-X.Y.Z/` directory (same as upstream), Windows zips contain `nim-X.Y.Z/` with `bin/nim.exe`. `sha256sums.txt` is attached to every release.
 
