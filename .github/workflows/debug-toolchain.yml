@@ -9,10 +9,12 @@ jobs:
     steps:
       - shell: pwsh
         run: |
-          ls C:\msys64\clangarm64\bin | Select-Object -First 40
-          echo "---"
-          Get-ChildItem C:\msys64\clangarm64\bin\*.exe | Select-Object Name | Format-Table -AutoSize
-          echo "--- clang check ---"
-          C:\msys64\clangarm64\bin\clang.exe --version 2>&1 | Select-Object -First 5
-          echo "--- gcc check ---"
-          if (Test-Path C:\msys64\clangarm64\bin\gcc.exe) { C:\msys64\clangarm64\bin\gcc.exe -dumpmachine } else { echo "no gcc.exe" }
+          echo "=== before ==="
+          ls C:\msys64\clangarm64\bin 2>&1 | Select-Object -First 10
+          echo "=== pacman search ==="
+          C:\msys64\usr\bin\pacman -Ss "clang-aarch64-gcc" 2>&1 | Select-Object -First 10
+          echo "=== install ==="
+          C:\msys64\usr\bin\pacman -S --noconfirm mingw-w64-clang-aarch64-gcc 2>&1 | Select-Object -Last 15
+          echo "=== after ==="
+          ls C:\msys64\clangarm64\bin\gcc.exe 2>&1
+          C:\msys64\clangarm64\bin\gcc.exe -dumpmachine 2>&1
