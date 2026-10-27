@@ -112,6 +112,16 @@ jobs:
           cd ..
           ./Nim-src/bin/nim -v
 
+      - name: Setup ARM64 gcc (windows-arm)
+        if: runner.os == 'Windows' && contains(matrix.file-suffix, 'arm64')
+        shell: pwsh
+        run: |
+          $gcc = "C:\msys64\clangarm64\bin\gcc.exe"
+          if (!(Test-Path $gcc)) { Write-Error "ARM64 gcc not found: $gcc"; exit 1 }
+          "C:\msys64\clangarm64\bin" >> $env:GITHUB_PATH
+          & $gcc -dumpmachine
+          "ARCH=64" >> $env:GITHUB_ENV
+
       - name: Build (windows)
         if: runner.os == 'Windows'
         shell: cmd
@@ -132,7 +142,7 @@ jobs:
           mv Nim-src "nim-${ver}"
           tar cJf "${archive}" "nim-${ver}"
           ls -lh "${archive}"
-          tar tf "${archive}" | head -5
+          tar tf "${archive}" | head -5 || true
           echo "ARCHIVE=${archive}" >> "$GITHUB_ENV"
 
       - name: Package (windows zip)
