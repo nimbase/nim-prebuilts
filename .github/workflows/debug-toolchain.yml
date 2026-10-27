@@ -1,0 +1,33 @@
+name: debug-toolchain
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: windows-11-arm
+    steps:
+      - shell: cmd
+        run: |
+          echo PROCESSOR_ARCHITECTURE=%PROCESSOR_ARCHITECTURE%
+          echo PROCESSOR_ARCHITEW6432=%PROCESSOR_ARCHITEW6432%
+          echo PROCESSOR_IDENTIFIER=%PROCESSOR_IDENTIFIER%
+          where gcc
+          gcc --version
+          gcc -dumpmachine
+          echo ---
+          where clang
+          clang --version
+          echo ---
+          where cl || echo no-cl-in-path
+          where link || echo no-link-in-path
+          echo ---
+          where make || echo no-make
+          echo ---
+          dir C:\msys64 2>nul || echo no-msys64
+          dir "C:\Program Files\LLVM" 2>nul || echo no-llvm-dir
+          dir "C:\mingw*" 2>nul || echo no-mingw-dir
+      - shell: pwsh
+        run: |
+          Get-Command gcc -ErrorAction SilentlyContinue | Format-List *
+          gcc -v 2>&1 | Select-Object -First 20
