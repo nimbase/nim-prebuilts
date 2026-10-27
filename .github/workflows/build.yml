@@ -57,7 +57,7 @@ jobs:
         run: |
           set -eu
           ver="${{ steps.resolve.outputs.nim-version }}"
-          if gh release view "v${ver}" >/dev/null 2>&1; then
+          if gh release view "v${ver}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
             echo "should-build=false" >> "$GITHUB_OUTPUT"
             echo "release v${ver} already exists, skipping build"
           else
@@ -176,6 +176,8 @@ jobs:
     if: needs.resolve.outputs.should-build == 'true'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           pattern: "*"
@@ -189,13 +191,14 @@ jobs:
         run: |
           set -eu
           ver="${{ needs.resolve.outputs.nim-version }}"
+          repo="${{ github.repository }}"
           ls -lh dist/
           (cd dist && sha256sum * > sha256sums.txt && cat sha256sums.txt)
-          if gh release view "v${ver}" >/dev/null 2>&1; then
+          if gh release view "v${ver}" --repo "${repo}" >/dev/null 2>&1; then
             echo "release v${ver} already exists, uploading assets"
-            gh release upload "v${ver}" dist/* --clobber
+            gh release upload "v${ver}" --repo "${repo}" dist/* --clobber
           else
-            gh release create "v${ver}" \
+            gh release create "v${ver}" --repo "${repo}" \
               --title "Nim ${ver}" \
               --notes "Prebuilt Nim ${ver} toolchains built from nim-lang/Nim@v${ver}. Mirrors nim-lang.org naming, plus Windows arm64." \
               dist/nim-*.tar.xz dist/nim-*.zip dist/sha256sums.txt
