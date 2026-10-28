@@ -1,6 +1,6 @@
 # nim-prebuilts
 
-Community [Nim](https://nim-lang.org) toolchain prebuilts for Linux, macOS and Windows on x64 and arm64, tracking nim-lang/nim](https://github.com/nim-lang/nim) releases.
+Community [Nim](https://nim-lang.org) toolchain prebuilts for Linux, macOS and Windows on x64 and arm64, tracking [nim-lang/nim](https://github.com/nim-lang/nim) releases.
 
 > [!NOTE]
 > This repo exists to provide fast, ready-to-use Nim toolchains for CI. It tracks
