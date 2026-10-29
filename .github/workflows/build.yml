@@ -140,9 +140,25 @@ jobs:
           ver="${{ needs.resolve.outputs.nim-version }}"
           artifact="nim-${ver}-${{ matrix.file-suffix }}"
           archive="${artifact}.tar.xz"
+          # Prune build intermediates (mirrors nim-lang/nightlies hbb.sh + build-release.sh).
+          # Measured on 2.4.x: csources_v3/c_code 1.9G, dist/*/.git ~140M,
+          # nimcache 73M, compiler/nim,nim1,nim2 25M.
           rm -rf "Nim-src/.git"
+          find Nim-src -type d -name .git -prune -exec rm -rf {} +
+          rm -rf Nim-src/csources Nim-src/csources_v1 Nim-src/csources_v3 Nim-src/c_code
+          rm -rf Nim-src/nimcache Nim-src/build Nim-src/web Nim-src/.github
+          rm -rf Nim-src/nimdoc Nim-src/tests_disabled Nim-src/drnim
+          find Nim-src -type d -name nimcache -prune -exec rm -rf {} +
+          find Nim-src -name '*.o' -delete
+          rm -f Nim-src/compiler/nim Nim-src/compiler/nim0 Nim-src/compiler/nim1 Nim-src/compiler/nim2 Nim-src/compiler/nim3
+          rm -f Nim-src/bin/nim_dbg Nim-src/bin/nim_csources_*
+          for f in Nim-src/bin/nim Nim-src/bin/nimble Nim-src/bin/atlas Nim-src/bin/nimsuggest Nim-src/bin/nimpretty Nim-src/bin/testament Nim-src/bin/nimgrep Nim-src/bin/nifler Nim-src/bin/nifmake Nim-src/koch; do
+            if [ -f "$f" ]; then strip "$f" 2>/dev/null || true; fi
+          done
+          du -sh Nim-src || true
+          du -sh Nim-src/* | sort -hr | head -n 20 || true
           mv Nim-src "nim-${ver}"
-          tar cJf "${archive}" "nim-${ver}"
+          tar -cf - "nim-${ver}" | xz -9e > "${archive}"
           ls -lh "${archive}"
           tar tf "${archive}" | head -5 || true
           echo "ARCHIVE=${archive}" >> "$GITHUB_ENV"
@@ -155,11 +171,18 @@ jobs:
           $ver = "${{ needs.resolve.outputs.nim-version }}"
           $artifact = "nim-$ver-${{ matrix.file-suffix }}"
           $archive = "$artifact.zip"
-          if (Test-Path "Nim-src/.git") { Remove-Item -Recurse -Force "Nim-src/.git" }
+          # Same pruning as unix job, adapted for PowerShell.
+          $pruneDirs = @(".git", "csources", "csources_v1", "csources_v3", "c_code", "nimcache", "build", "web", ".github", "nimdoc", "tests_disabled", "drnim")
+          Get-ChildItem -Path "Nim-src" -Recurse -Directory -Force -ErrorAction SilentlyContinue | Where-Object { $pruneDirs -contains $_.Name } | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+          Get-ChildItem -Path "Nim-src" -Recurse -Filter "*.o" -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+          Remove-Item -Force -ErrorAction SilentlyContinue "Nim-src/compiler/nim.exe", "Nim-src/compiler/nim0.exe", "Nim-src/compiler/nim1.exe", "Nim-src/compiler/nim2.exe", "Nim-src/compiler/nim3.exe"
+          Remove-Item -Force -ErrorAction SilentlyContinue "Nim-src/bin/nim_dbg.exe"
+          Get-ChildItem -Path "Nim-src/bin" -Filter "nim_csources_*.exe" -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
           if (Test-Path "nim-$ver") { Remove-Item -Recurse -Force "nim-$ver" }
           Rename-Item -Path "Nim-src" -NewName "nim-$ver"
           if (Test-Path $archive) { Remove-Item -Force $archive }
-          Compress-Archive -Force -Path "nim-$ver" -DestinationPath $archive
+          # 7z with -mx=9 compresses much better than Compress-Archive.
+          & 7z a -tzip -mx=9 $archive "nim-$ver" | Out-Null
           Get-Item $archive | Format-List Name, Length
           "ARCHIVE=$archive" >> $env:GITHUB_ENV
           "ARTIFACT=$artifact" >> $env:GITHUB_ENV
