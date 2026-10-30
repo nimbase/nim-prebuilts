@@ -1,0 +1,56 @@
+name: mirror
+
+on:
+  schedule:
+    - cron: "0 6 * * 0"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Re-upload releases.json even if unchanged"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    name: mirror releases.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Mirror releases.json to latest release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          set -eu
+          upstream="https://nim-lang.org/releases.json"
+          repo="${{ github.repository }}"
+          tag="latest"
+          curl -fsSL "$upstream" -o upstream.json
+          python3 -m json.tool upstream.json > /dev/null
+          sha="$(sha256sum upstream.json | cut -d' ' -f1)"
+          date="$(date -u +%F)"
+          notes="Mirror of ${upstream}. Updated ${date}. Upstream sha256: ${sha}."
+          if ! gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
+            echo "creating $tag release"
+            gh release create "$tag" --repo "$repo" \
+              --title "Nim releases mirror" \
+              --notes "$notes" \
+              upstream.json#releases.json
+          else
+            tmp="$(mktemp -d)"
+            if gh release download "$tag" --repo "$repo" -p releases.json -D "$tmp" >/dev/null 2>&1 \
+              && cmp -s "$tmp/releases.json" upstream.json \
+              && [[ "${FORCE:-false}" != "true" ]]; then
+              echo "releases.json unchanged, skipping"
+            else
+              echo "uploading releases.json to $tag"
+              gh release upload "$tag" --repo "$repo" --clobber upstream.json#releases.json
+              gh release edit "$tag" --repo "$repo" --notes "$notes"
+            fi
+            rm -rf "$tmp"
+          fi
