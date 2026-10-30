@@ -26,8 +26,12 @@ Unix archives contain a top-level `nim-X.Y.Z/` directory (same as upstream), Win
 
 `nim-lang/nim` does not notify this repo on new tags, so `.github/workflows/build.yml` polls:
 
-- `schedule: cron 0 6 * * *` resolves `stable` from `nim-lang.org/channels/stable` (fallback: latest `v*` tag via `git ls-remote`) and skips if `vX.Y.Z` already exists here.
+- `schedule: cron 0 6 * * 0` (weekly) resolves `stable` from `nim-lang.org/channels/stable` (fallback: latest `v*` tag via `git ls-remote`) and skips if `vX.Y.Z` already exists here.
 - `workflow_dispatch` with optional `nim-version` (exact, e.g. `2.2.12`, or `stable`) builds one version on demand.
+
+Only the newest 5 `vX.Y.Z` releases are kept; the `prune` job deletes older
+ones (`gh release delete --cleanup-tag`) at the end of every run. A version
+built in the same run is never pruned.
 
 Each matrix job clones `nim-lang/Nim@vX.Y.Z`, runs `build_all.sh` (unix) or `build_all.bat` (windows), packages with the names above, and uploads an artifact. The `release` job merges artifacts and runs `gh release create vX.Y.Z`.
 
