@@ -81,7 +81,7 @@ jobs:
           - runner: ubuntu-24.04-arm
             file-suffix: linux_arm64
             ext: tar.xz
-          - runner: macos-14
+          - runner: macos-15
             file-suffix: macosx_arm64
             ext: tar.xz
           - runner: macos-15-intel
