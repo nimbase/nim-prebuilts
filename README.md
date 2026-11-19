@@ -16,7 +16,6 @@ Each `vX.Y.Z` release follows `nim-lang.org` naming for unix, plus `windows_` pr
 | `ubuntu-24.04` | `nim-X.Y.Z-linux_x64.tar.xz` |
 | `ubuntu-24.04-arm` | `nim-X.Y.Z-linux_arm64.tar.xz` |
 | `macos-15-intel` | `nim-X.Y.Z-macosx_x64.tar.xz` |
-| `macos-14` | `nim-X.Y.Z-macosx_arm64.tar.xz` |
 | `windows-latest` | `nim-X.Y.Z-windows_x64.zip` |
 | `windows-11-arm` | `nim-X.Y.Z-windows_arm64.zip` |
 
